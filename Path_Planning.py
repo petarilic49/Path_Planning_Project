@@ -31,7 +31,11 @@ class Node():
     
     def get_pos(self):
         return self.row, self.col
-    def clicked(self):
+    def set_source(self):
+        self.color = BLUE
+    def set_destination(self):
+        self.color = RED
+    def set_barrier(self):
         self.color = BLACK
     def draw(self, scn):
         pygame.draw.rect(scn, self.color, pygame.Rect(self.x, self.y, self.size, self.size))
@@ -51,19 +55,28 @@ def grid_loop(rows, cols):
     #Need a while loop to keep the window open
     nodes = make_nodes(rows, cols, screen_width)
     size = screen_width // rows
+    mouseclick = 0
     while True:
         drawGrid(nodes, rows, cols) 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONUP:
+            if pygame.mouse.get_pressed() == (1, 0, 0): #makes sure that only the left mouse click works 
                 mousepos = pygame.mouse.get_pos()
                 i, j = mousepos
                 i = i // size
                 j = j // size
                 node = nodes[i][j]
-                node.clicked()
+                if mouseclick == 0:
+                    node.set_source()
+                    mouseclick = 1
+                elif mouseclick == 1:
+                    node.set_destination()
+                    mouseclick = 2
+                else:
+                    node.set_barrier()
+                
 
 #Function to draw the grid (ie horizontal and vertical lines)
 def draw_gridlines(rows, cols):
@@ -96,10 +109,5 @@ def drawGrid(grid, rows, cols):
     
     draw_gridlines(rows, cols)
     pygame.display.update()
-
-
-#Function to identify if a box/rectangle has been clicked
-def mouse_click(rows, cols):
-    pass
 
 grid_loop(25, 25)

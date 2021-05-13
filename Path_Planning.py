@@ -205,24 +205,28 @@ def dijkstra(grid, start, end):
             if distance[current_row][current_col - 1] > distance[current_row][current_col] + 1 and not visited[current_row][current_col - 1] and not grid[current_row][current_col - 1].is_barrier():
                 distance[current_row][current_col - 1] = distance[current_row][current_col] + 1
                 tempdist[current_row][current_col - 1] = distance[current_row][current_col] + 1
+                #print('Top Node DIst: ', distance[current_row][current_col - 1])
                 grid[current_row][current_col - 1].visited()
                 drawGrid(grid, 25, 25)
-        if current_col < 23: #Check the distance of the down node
+        if current_col < 24: #Check the distance of the down node
             if distance[current_row][current_col + 1] > distance[current_row][current_col] + 1 and not visited[current_row][current_col + 1] and not grid[current_row][current_col + 1].is_barrier():
                 distance[current_row][current_col + 1] = distance[current_row][current_col] + 1
                 tempdist[current_row][current_col + 1] = distance[current_row][current_col] + 1
+                #print('Down Node DIst: ', distance[current_row][current_col + 1])
                 grid[current_row][current_col + 1].visited()
                 drawGrid(grid, 25, 25)
-        if current_row < 23: #Check the distance of the right node
+        if current_row < 24: #Check the distance of the right node
             if distance[current_row + 1][current_col] > distance[current_row][current_col] + 1 and not visited[current_row + 1][current_col] and not grid[current_row + 1][current_col].is_barrier():
                 distance[current_row + 1][current_col] = distance[current_row][current_col] + 1
                 tempdist[current_row + 1][current_col] = distance[current_row][current_col] + 1
+                #print('Right Node DIst: ', distance[current_row + 1][current_col])
                 grid[current_row + 1][current_col].visited()
                 drawGrid(grid, 25, 25)
         if current_row > 0: #Check the distance of the left node
             if distance[current_row - 1][current_col] > distance[current_row][current_col] + 1 and not visited[current_row - 1][current_col + 1] and not grid[current_row - 1][current_col].is_barrier():
                 distance[current_row - 1][current_col] = distance[current_row][current_col] + 1
                 tempdist[current_row - 1][current_col] = distance[current_row][current_col] + 1
+                #print('Left Node DIst: ', distance[current_row - 1][current_col])
                 grid[current_row - 1][current_col].visited()
                 drawGrid(grid, 25, 25)
 
@@ -243,54 +247,41 @@ def dijkstra(grid, start, end):
             print('In back propagat')
             current_node.set_path()
             #If were in this if statement that means we got the path, now we need to back propagate and set the path to different color
+            min_val = inf
             while distance[current_row][current_col] != 0:
-                min_val = inf
+                node_switch = 1
                 if distance[current_row][current_col - 1] < min_val and not grid[current_row][current_col - 1].is_barrier(): #Check up node distance
-                    print('Up Node: ', distance[current_row][current_col - 1])
-                    min_val = distance[current_row][current_col - 1]
-                    current_col = current_col - 1
+                    node_switch = 1
+                elif distance[current_row][current_col + 1] < min_val and not grid[current_row][current_col + 1].is_barrier(): #Check down node distance
+                    node_switch = 2
+                elif distance[current_row + 1][current_col] < min_val and not grid[current_row + 1][current_col].is_barrier(): #Check down node distance
+                    node_switch = 3
+                elif distance[current_row - 1][current_col] < min_val and not grid[current_row - 1][current_col].is_barrier(): #Check down node distance
+                    node_switch = 4
+                if node_switch == 1:
+                    current_row, current_col = current_row, current_col - 1
+                    min_val = distance[current_row][current_col]
                     current_node = grid[current_row][current_col]
-                    #current_node.set_path()
-                    #drawGrid(grid, 25, 25)
-                if distance[current_row][current_col + 1] < min_val and not grid[current_row][current_col + 1].is_barrier(): #Check down node distance
-                    print('Down Node: ', distance[current_row][current_col + 1])
-                    min_val = distance[current_row][current_col + 1]
-                    current_col = current_col + 1
+                elif node_switch == 2:
+                    current_row, current_col = current_row, current_col + 1
+                    min_val = distance[current_row][current_col]
                     current_node = grid[current_row][current_col]
-                    #current_node.set_path()
-                    #drawGrid(grid, 25, 25)
-                if distance[current_row + 1][current_col] < min_val and not grid[current_row + 1][current_col].is_barrier(): #Check down node distance
-                    print('Right Node: ', distance[current_row + 1][current_col])
-                    min_val = distance[current_row + 1][current_col]
-                    current_row = current_row + 1
+                elif node_switch == 3:
+                    current_row, current_col = current_row + 1, current_col
+                    min_val = distance[current_row][current_col]
                     current_node = grid[current_row][current_col]
-                    #current_node.set_path()
-                    #drawGrid(grid, 25, 25)
-                if distance[current_row - 1][current_col] < min_val and not grid[current_row - 1][current_col].is_barrier(): #Check down node distance
-                    print('Left Node: ', distance[current_row][current_col - 1])
-                    min_val = distance[current_row - 1][current_col]
-                    current_row = current_row - 1
+                elif node_switch == 4:
+                    current_row, current_col = current_row - 1, current_col
+                    min_val = distance[current_row][current_col]
                     current_node = grid[current_row][current_col]
-                    #current_node.set_path()
-                    #drawGrid(grid, 25, 25)
+
                 current_node.set_path()
                 drawGrid(grid, 25, 25)
+                print(min_val)
                 print('Current Row: ', current_row, 'Current Col: ', current_col)
-            #current_row, current_col = current_node.get_pos()
-            #if distance[current_row][current_col] == 0:
             print('Is finished')
             finished = True
 
-            # print('Current Node Distance: ', distance[current_row][current_col])
-            # print('Up Node: ', distance[current_row][current_col - 1])
-            # print('Down Node: ', distance[current_row][current_col + 1])
-            # print('Right Node: ', distance[current_row + 1][current_col])
-            # print('Left Node: ', distance[current_row - 1][current_col])
-        
-        #print('New Row: ', current_row, 'New Col: ', current_col)
-        #pygame.display.update()
         time.sleep(0.02)
         
-        
-        #current_node = grid
 grid_loop(25, 25)

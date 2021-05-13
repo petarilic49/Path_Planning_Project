@@ -19,6 +19,7 @@ MAGENTA = (255, 0, 255)
 
 #Create class to hold the node attributes
 class Node():
+    #Initialization function once a node class is created. Each node will be initialized with its own characteristics shown below
     def __init__(self, row, col, size):
         self.row = row
         self.col = col
@@ -30,27 +31,27 @@ class Node():
         self.source = False
         self.destination = False
     
-    def get_pos(self):
+    def get_pos(self): #Return the row and column of the node
         return self.row, self.col
-    def set_source(self):
+    def set_source(self): #Set the node as the source/start color (ie color blue)
         self.color = BLUE
-    def set_destination(self):
+    def set_destination(self): #Set the node as the destination/target color (ie color Red)
         self.color = RED
-    def set_barrier(self):
+    def set_barrier(self): #Set the node as a barrier color (ie color black)
         self.color = BLACK
-    def set_path(self):
+    def set_path(self): #Set the node to a shortest path node (ie color Cyan)
         self.color = CYAN
-    def is_source(self):
+    def is_source(self): #Set the node as the source/start node
         self.source = True
-    def is_destination(self):
+    def is_destination(self): #Set the node as the destination/target node
         self.destination = True
-    def is_barrier(self):
+    def is_barrier(self): #Return true if the node is a barrier, the algorithm must not use this node as a means to a short path
         return self.color == BLACK
-    def visited(self):
+    def visited(self): #Set the node as visited color (ie yellow), means the node has been checked by the algorithm
         self.color = YELLOW
-    def was_visited(self):
+    def was_visited(self): #Return true if the node has been visited
         return self.color == YELLOW
-    def draw(self, scn):
+    def draw(self, scn): #Draw the node on the grid with the appropriate color and size, send in the x and y position and then the width is the size
         pygame.draw.rect(scn, self.color, pygame.Rect(self.x, self.y, self.size, self.size))
         
 # Set the size of our grid (just need width cause we want it to be square)
@@ -62,36 +63,40 @@ screen = pygame.display.set_mode((screen_width, screen_width))
 pygame.display.set_caption('Path Grid')
 screen.fill(WHITE)
 
+#This is the main loop that continuously updates the grid pop up 
 def grid_loop(rows, cols):
     #Need a while loop to keep the window open
     nodes = make_nodes(rows, cols, screen_width)
+    #Get the size (ie height x width) of each square in the grid
     size = screen_width // rows
+    #Initialize the number of mouse clicks
     mouseclick = 0
     while True:
-        drawGrid(nodes, rows, cols) 
-        for event in pygame.event.get():
+        drawGrid(nodes, rows, cols) #Draw the grid and nodes in the grid
+        for event in pygame.event.get(): #If the exit button is pressed end the program
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if pygame.mouse.get_pressed() == (1, 0, 0): #makes sure that only the left mouse click works, well use the same syntax but right click to start the algorithm 
-                mousepos = pygame.mouse.get_pos()
+            if pygame.mouse.get_pressed() == (1, 0, 0): #If the left mouse click is clicked have to decide if its source, destination, or barrier node
+                mousepos = pygame.mouse.get_pos() #Get the posistion of the mouse on the grid
                 i, j = mousepos
-                i = i // size
+                #Return which square/node was clicked
+                i = i // size  
                 j = j // size
                 node = nodes[i][j]
-                if mouseclick == 0:
+                if mouseclick == 0: #If its the first mouse click then we set the clicked node to source
                     node.is_source()
                     node.set_source()
                     start = node
                     mouseclick = 1
-                elif mouseclick == 1:
+                elif mouseclick == 1: #If its the second mouse click then we set the clicked node to destination
                     node.is_destination()
                     node.set_destination()
                     end = node
                     mouseclick = 2
-                else:
+                else: #If its the third or more mouse click then we set the clicked node to barrier
                     node.set_barrier()
-            elif pygame.mouse.get_pressed() == (0, 0, 1): #if the right mouse button is clicked start the algorithm
+            elif pygame.mouse.get_pressed() == (0, 0, 1): #If the right mouse button is clicked start the algorithm
                 dijkstra(nodes, start, end)
                 
 
@@ -105,6 +110,7 @@ def draw_gridlines(rows, cols):
         for j in range(cols):
             pygame.draw.line(screen, BLACK, (j*gap, 0), (j*gap, screen_width))
 
+#Function to create the nodes on the grid
 def make_nodes(rows, cols, screenwidth):
     grid = [[]]
     gap = screenwidth // rows
@@ -115,6 +121,7 @@ def make_nodes(rows, cols, screenwidth):
             grid[i].append(node)
     return grid
 
+#Function to actually draw and update the grid with the correct node colors
 def drawGrid(grid, rows, cols):
     for row in grid:
         for node in row:
@@ -138,69 +145,72 @@ def dijkstra(grid, start, end):
     inf = 1000000000
     #Make an array/list that has infinity for all the distances
     distance = []
-    tempdist = []
+    tempdist = [] #Temp dist is used to find the index of the minimum distance, this is done by setting the current row and column to inf because technically 
+    #the current index is actually a minimum so we want to find the next lowest minimum
+    
+    #Initialize all the distances in the distance and tempdist lists to inf
     for i in range(len(grid) - 1):
         distance.append([])
         tempdist.append([])
         for j in range(len(grid) - 1):
             distance[i].append(inf)
             tempdist[i].append(inf)
+    
     #Get the position of the start node and make the distance equal to 0
     distance[start_row][start_col] = 0
     tempdist[start_row][start_col] = 0
 
-    #Create a list for the visited and unvisisted nodes (just holds the row and col of the nodes visited)
+    #Create a list for the visited nodes (holds False for node index that hasnt been visited)
     visited = []
     for i in range(len(grid) - 1):
         visited.append([])
         for j in range(len(grid) - 1):
             visited[i].append((False))
-    unvisited = []
-    for i in range(len(grid) - 1):
-        unvisited.append([])
-        for j in range(len(grid) - 1):
-            unvisited[i].append((i, j))
 
-    #Append the starting node to the visited list and pop the start node from the unvisited list (For some reason Pygame assumed rows is top and columns is side)
-    #visited.append(unvisited[start_row].pop(start_col))
+    #Initialize the starting node to be visited
     visited[start_row][start_col] = True
 
+    #Set the current node to the starting node
     current_node = start
-    #Were gonna go through each nodes neighbors and update the distance
+    #Initialize a finish variable to False and feed into while loop until finished variable is set to True when the shortest path is found
+    #Essentially every new node visited (whether above, below, or to the sides) will get a distance of the current distance at that node plus 1
     finished = False
     while not finished:
+        #Get the current nodes row and column
         current_row, current_col = current_node.get_pos() 
-        #Move one up
-        if current_col > 0: #Check the distance of the up node
+        if current_col > 0: #Check/update the distance of the up node
             if distance[current_row][current_col - 1] > distance[current_row][current_col] + 1 and not visited[current_row][current_col - 1] and not grid[current_row][current_col - 1].is_barrier():
                 distance[current_row][current_col - 1] = distance[current_row][current_col] + 1
                 tempdist[current_row][current_col - 1] = distance[current_row][current_col] + 1
+                #Make the node color change to Yellow to indicate distance has been updated
                 grid[current_row][current_col - 1].visited()
+                #Redraw/update the grid to display updated distances
                 drawGrid(grid, 25, 25)
-        if current_col < 24: #Check the distance of the down node
+        if current_col < 24: #Check/update the distance of the down node
             if distance[current_row][current_col + 1] > distance[current_row][current_col] + 1 and not visited[current_row][current_col + 1] and not grid[current_row][current_col + 1].is_barrier():
                 distance[current_row][current_col + 1] = distance[current_row][current_col] + 1
                 tempdist[current_row][current_col + 1] = distance[current_row][current_col] + 1
                 grid[current_row][current_col + 1].visited()
                 drawGrid(grid, 25, 25)
-        if current_row < 24: #Check the distance of the right node
+        if current_row < 24: #Check/update the distance of the right node
             if distance[current_row + 1][current_col] > distance[current_row][current_col] + 1 and not visited[current_row + 1][current_col] and not grid[current_row + 1][current_col].is_barrier():
                 distance[current_row + 1][current_col] = distance[current_row][current_col] + 1
                 tempdist[current_row + 1][current_col] = distance[current_row][current_col] + 1
-                #print('Right Node DIst: ', distance[current_row + 1][current_col])
                 grid[current_row + 1][current_col].visited()
                 drawGrid(grid, 25, 25)
-        if current_row > 0: #Check the distance of the left node
+        if current_row > 0: #Check/update the distance of the left node
             if distance[current_row - 1][current_col] > distance[current_row][current_col] + 1 and not visited[current_row - 1][current_col + 1] and not grid[current_row - 1][current_col].is_barrier():
                 distance[current_row - 1][current_col] = distance[current_row][current_col] + 1
                 tempdist[current_row - 1][current_col] = distance[current_row][current_col] + 1
                 grid[current_row - 1][current_col].visited()
                 drawGrid(grid, 25, 25)
 
+        #Update the visited list to True for the current node index
         visited[current_row][current_col] = True
-        #Now to somehow have to check which node should be visited next. It should be the smallest distance. Need a temporary distance list that will set the
+        #Now have to check which node should be visited next. It should be the node with the smallest distance. Need a temporary distance list that will set the
         #current node location to infinity and then look in that list for the index with the smallest value
         tempdist[current_row][current_col] = inf
+        #Initialize the min_val to inf so we know we wont be stuck in the loop or the loop outputs a min_val that was for a previous node analyzed
         min_val = inf
         for i in range(len(grid) - 1):
             for j in range(len(grid) - 1):
@@ -208,47 +218,58 @@ def dijkstra(grid, start, end):
                     min_val = tempdist[i][j]
                     current_row = i
                     current_col = j
+        #Make the new current node equal to the node that has a min_val at the index obtained from the for loop above
         current_node = grid[current_row][current_col]
 
+        #If the next node to be analyzed is actually the target/destination node we must proceed to finding and displaying the shortest path
+        #To find the shortest path we have to back propagate through the distance array and check the distance for every top, bottom, right, and left node 
+        # and see which one of the four has the lowest distance. That will be the node of the shortest path. Repeat this until we end up at our starting node
         if current_row == end_row and current_col == end_col:
-            print('In back propagat')
+            print('Displaying shortest path')
+            #Set the target/destination node to the color of Cyan (ie the shortest path color)
             current_node.set_path()
-            #If were in this if statement that means we got the path, now we need to back propagate and set the path to different color
+            #Initialize the min_val to inf so we know once we start we'll get a min_val
             min_val = inf
             while distance[current_row][current_col] != 0:
-                node_switch = 1
+                #node_switch holds the direction of which node should be the next shortest path. Initialized to be 'UP'
+                node_switch = 'UP'
                 if current_col > 0 and distance[current_row][current_col - 1] < min_val and not grid[current_row][current_col - 1].is_barrier(): #Check up node distance
-                    node_switch = 1
+                    node_switch = 'UP'
                 elif current_col < 24 and distance[current_row][current_col + 1] < min_val and not grid[current_row][current_col + 1].is_barrier(): #Check down node distance
-                    node_switch = 2
-                elif current_row < 24 and distance[current_row + 1][current_col] < min_val and not grid[current_row + 1][current_col].is_barrier(): #Check down node distance
-                    node_switch = 3
-                elif current_row > 0 and distance[current_row - 1][current_col] < min_val and not grid[current_row - 1][current_col].is_barrier(): #Check down node distance
-                    node_switch = 4
-                if node_switch == 1:
+                    node_switch = 'DOWN'
+                elif current_row < 24 and distance[current_row + 1][current_col] < min_val and not grid[current_row + 1][current_col].is_barrier(): #Check right node distance
+                    node_switch = 'RIGHT'
+                elif current_row > 0 and distance[current_row - 1][current_col] < min_val and not grid[current_row - 1][current_col].is_barrier(): #Check left node distance
+                    node_switch = 'LEFT'
+                #Based on which direction the next shortest path node should be, we will update the new current node indeces, update the min_val, and set the new current node to the next shortest path node
+                #When we go back to the top of the while loop however, min_val will not be reset to inf but to the lowest previous value since at least one node surrounding
+                #the current shortest path node will be one less the current nodes distance 
+                if node_switch == 'UP':
                     current_row, current_col = current_row, current_col - 1
                     min_val = distance[current_row][current_col]
                     current_node = grid[current_row][current_col]
-                elif node_switch == 2:
+                elif node_switch == 'DOWN':
                     current_row, current_col = current_row, current_col + 1
                     min_val = distance[current_row][current_col]
                     current_node = grid[current_row][current_col]
-                elif node_switch == 3:
+                elif node_switch == 'RIGHT':
                     current_row, current_col = current_row + 1, current_col
                     min_val = distance[current_row][current_col]
                     current_node = grid[current_row][current_col]
-                elif node_switch == 4:
+                elif node_switch == 'LEFT':
                     current_row, current_col = current_row - 1, current_col
                     min_val = distance[current_row][current_col]
                     current_node = grid[current_row][current_col]
 
+                #Make the color of the new shortest path node to Cyan
                 current_node.set_path()
+                #Update the grid with the colored nodes
                 drawGrid(grid, 25, 25)
-                print(min_val)
-                print('Current Row: ', current_row, 'Current Col: ', current_col)
+            #Once the shortest path node is at the starting node we exit the shortest path generating while loop and the algorithm while loop
             print('Is finished')
             finished = True
-
+        #Time delay the algorithm loop to 0.02 seconds in order to better visualize each node being checked
         time.sleep(0.02)
-        
+
+#Make a grid of 25 rows and 25 columns and begin the path planning   
 grid_loop(25, 25)

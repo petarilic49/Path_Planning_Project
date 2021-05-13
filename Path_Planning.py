@@ -5,8 +5,6 @@
 import pygame
 import sys
 import time
-import numpy as np
-import pandas as pd
 
 #Define the color constants
 BLACK = (0, 0, 0)
@@ -19,7 +17,7 @@ YELLOW = (255, 255, 0)
 CYAN = (0, 255, 255)
 MAGENTA = (255, 0, 255)
 
-#Create class of node
+#Create class to hold the node attributes
 class Node():
     def __init__(self, row, col, size):
         self.row = row
@@ -52,25 +50,9 @@ class Node():
         self.color = YELLOW
     def was_visited(self):
         return self.color == YELLOW
-    # This function can tell us which node to visit next 
-    def update_neighbor(self, grid): #This function lets every node hold its neighbors for easier computation
-        if self.col > 0: 
-            self.neighbor.append(grid[self.row][self.col - 1]) #Up
-        if self.col < 23:
-            self.neighbor.append(grid[self.row][self.col + 1]) #Down
-        if self.row < 23:
-            self.neighbor.append(grid[self.row + 1][self.col]) #Right
-        if self.row > 0:
-            self.neighbor.append(grid[self.row - 1][self.col]) #Left
-    def get_neighbor(self):
-        return self.neighbor
-    def neighbor_num(self):
-        return len(self.neighbor)
     def draw(self, scn):
         pygame.draw.rect(scn, self.color, pygame.Rect(self.x, self.y, self.size, self.size))
         
-        
-
 # Set the size of our grid (just need width cause we want it to be square)
 screen_width = 750
 
@@ -112,20 +94,15 @@ def grid_loop(rows, cols):
             elif pygame.mouse.get_pressed() == (0, 0, 1): #if the right mouse button is clicked start the algorithm
                 dijkstra(nodes, start, end)
                 
-    
-        
-                
 
 #Function to draw the grid (ie horizontal and vertical lines)
 def draw_gridlines(rows, cols):
     gap = screen_width // rows
     #Print horizontal lines
     for i in range(rows):
-        #print('Horizontal Line at: ', i*gap)
         pygame.draw.line(screen, BLACK, (0, i*gap), (screen_width, i*gap))
         #Print vertical lines
         for j in range(cols):
-            #print('Vertical Line at: ', j*gap)
             pygame.draw.line(screen, BLACK, (j*gap, 0), (j*gap, screen_width))
 
 def make_nodes(rows, cols, screenwidth):
@@ -139,8 +116,6 @@ def make_nodes(rows, cols, screenwidth):
     return grid
 
 def drawGrid(grid, rows, cols):
-    #screen.fill(WHITE) #have to fill everything every fps
-
     for row in grid:
         for node in row:
             node.draw(screen)
@@ -159,7 +134,7 @@ def dijkstra(grid, start, end):
     print('Start Row: ', start_row, 'Start Col: ', start_col)
     # Get the row and col of the end node
     end_row, end_col = end.get_pos()
-    #For now just set infinity to very high number
+    #Set infinity to very high number
     inf = 1000000000
     #Make an array/list that has infinity for all the distances
     distance = []
@@ -190,11 +165,6 @@ def dijkstra(grid, start, end):
     #visited.append(unvisited[start_row].pop(start_col))
     visited[start_row][start_col] = True
 
-    #Make the distance of the starting nodes neighbors equal to 1 and change their color 
-    for row in grid:
-        for node in row:
-            node.update_neighbor(grid)
-
     current_node = start
     #Were gonna go through each nodes neighbors and update the distance
     finished = False
@@ -205,14 +175,12 @@ def dijkstra(grid, start, end):
             if distance[current_row][current_col - 1] > distance[current_row][current_col] + 1 and not visited[current_row][current_col - 1] and not grid[current_row][current_col - 1].is_barrier():
                 distance[current_row][current_col - 1] = distance[current_row][current_col] + 1
                 tempdist[current_row][current_col - 1] = distance[current_row][current_col] + 1
-                #print('Top Node DIst: ', distance[current_row][current_col - 1])
                 grid[current_row][current_col - 1].visited()
                 drawGrid(grid, 25, 25)
         if current_col < 24: #Check the distance of the down node
             if distance[current_row][current_col + 1] > distance[current_row][current_col] + 1 and not visited[current_row][current_col + 1] and not grid[current_row][current_col + 1].is_barrier():
                 distance[current_row][current_col + 1] = distance[current_row][current_col] + 1
                 tempdist[current_row][current_col + 1] = distance[current_row][current_col] + 1
-                #print('Down Node DIst: ', distance[current_row][current_col + 1])
                 grid[current_row][current_col + 1].visited()
                 drawGrid(grid, 25, 25)
         if current_row < 24: #Check the distance of the right node
@@ -226,7 +194,6 @@ def dijkstra(grid, start, end):
             if distance[current_row - 1][current_col] > distance[current_row][current_col] + 1 and not visited[current_row - 1][current_col + 1] and not grid[current_row - 1][current_col].is_barrier():
                 distance[current_row - 1][current_col] = distance[current_row][current_col] + 1
                 tempdist[current_row - 1][current_col] = distance[current_row][current_col] + 1
-                #print('Left Node DIst: ', distance[current_row - 1][current_col])
                 grid[current_row - 1][current_col].visited()
                 drawGrid(grid, 25, 25)
 
@@ -250,13 +217,13 @@ def dijkstra(grid, start, end):
             min_val = inf
             while distance[current_row][current_col] != 0:
                 node_switch = 1
-                if distance[current_row][current_col - 1] < min_val and not grid[current_row][current_col - 1].is_barrier(): #Check up node distance
+                if current_col > 0 and distance[current_row][current_col - 1] < min_val and not grid[current_row][current_col - 1].is_barrier(): #Check up node distance
                     node_switch = 1
-                elif distance[current_row][current_col + 1] < min_val and not grid[current_row][current_col + 1].is_barrier(): #Check down node distance
+                elif current_col < 24 and distance[current_row][current_col + 1] < min_val and not grid[current_row][current_col + 1].is_barrier(): #Check down node distance
                     node_switch = 2
-                elif distance[current_row + 1][current_col] < min_val and not grid[current_row + 1][current_col].is_barrier(): #Check down node distance
+                elif current_row < 24 and distance[current_row + 1][current_col] < min_val and not grid[current_row + 1][current_col].is_barrier(): #Check down node distance
                     node_switch = 3
-                elif distance[current_row - 1][current_col] < min_val and not grid[current_row - 1][current_col].is_barrier(): #Check down node distance
+                elif current_row > 0 and distance[current_row - 1][current_col] < min_val and not grid[current_row - 1][current_col].is_barrier(): #Check down node distance
                     node_switch = 4
                 if node_switch == 1:
                     current_row, current_col = current_row, current_col - 1

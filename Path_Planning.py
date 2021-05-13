@@ -177,7 +177,7 @@ def dijkstra(grid, start, end):
     finished = False
     while not finished:
         #Get the current nodes row and column
-        current_row, current_col = current_node.get_pos() 
+        current_row, current_col = current_node.get_pos()
         if current_col > 0: #Check/update the distance of the up node
             if distance[current_row][current_col - 1] > distance[current_row][current_col] + 1 and not visited[current_row][current_col - 1] and not grid[current_row][current_col - 1].is_barrier():
                 distance[current_row][current_col - 1] = distance[current_row][current_col] + 1
@@ -199,7 +199,7 @@ def dijkstra(grid, start, end):
                 grid[current_row + 1][current_col].visited()
                 drawGrid(grid, 25, 25)
         if current_row > 0: #Check/update the distance of the left node
-            if distance[current_row - 1][current_col] > distance[current_row][current_col] + 1 and not visited[current_row - 1][current_col + 1] and not grid[current_row - 1][current_col].is_barrier():
+            if distance[current_row - 1][current_col] > distance[current_row][current_col] + 1 and not visited[current_row - 1][current_col] and not grid[current_row - 1][current_col].is_barrier():
                 distance[current_row - 1][current_col] = distance[current_row][current_col] + 1
                 tempdist[current_row - 1][current_col] = distance[current_row][current_col] + 1
                 grid[current_row - 1][current_col].visited()

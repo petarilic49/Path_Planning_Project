@@ -157,13 +157,16 @@ def dijkstra(grid, start, end):
     inf = 1000000000
     #Make an array/list that has infinity for all the distances
     distance = []
+    tempdist = []
     for i in range(len(grid) - 1):
         distance.append([])
+        tempdist.append([])
         for j in range(len(grid) - 1):
             distance[i].append(inf)
-
+            tempdist[i].append(inf)
     #Get the position of the start node and make the distance equal to 0
     distance[start_row][start_col] = 0
+    tempdist[start_row][start_col] = 0
 
     #Create a list for the visited and unvisisted nodes (just holds the row and col of the nodes visited)
     visited = []
@@ -195,27 +198,43 @@ def dijkstra(grid, start, end):
         if current_col > 0: #Check the distance of the up node
             if distance[current_row][current_col - 1] > distance[current_row][current_col] + 1 and not visited[current_row][current_col - 1]:
                 distance[current_row][current_col - 1] = distance[current_row][current_col] + 1
+                tempdist[current_row][current_col - 1] = distance[current_row][current_col] + 1
                 grid[current_row][current_col - 1].visited()
         if current_col < 23: #Check the distance of the down node
             if distance[current_row][current_col + 1] > distance[current_row][current_col] + 1 and not visited[current_row][current_col + 1]:
                 distance[current_row][current_col + 1] = distance[current_row][current_col] + 1
+                tempdist[current_row][current_col + 1] = distance[current_row][current_col] + 1
                 grid[current_row][current_col + 1].visited()
         if current_row < 23: #Check the distance of the right node
             if distance[current_row + 1][current_col] > distance[current_row][current_col] + 1 and not visited[current_row + 1][current_col]:
                 distance[current_row + 1][current_col] = distance[current_row][current_col] + 1
+                tempdist[current_row + 1][current_col] = distance[current_row][current_col] + 1
                 grid[current_row + 1][current_col].visited()
-        if current_col < 23: #Check the distance of the left node
+        if current_row > 0: #Check the distance of the left node
             if distance[current_row - 1][current_col] > distance[current_row][current_col] + 1 and not visited[current_row - 1][current_col + 1]:
                 distance[current_row - 1][current_col] = distance[current_row][current_col] + 1
+                tempdist[current_row - 1][current_col] = distance[current_row][current_col] + 1
                 grid[current_row - 1][current_col].visited()
         
         visited[current_row][current_col] = True
-        #Now to somehow have to check which node should be visited next. It should be the smallest distance
-        min_value = min(distance)
-        print(min_value)
-        min_index = distance.index(min_value)
-        print(min_index)
-        #print(distance)
-        finished = True
+        #Now to somehow have to check which node should be visited next. It should be the smallest distance. Need a temporary distance list that will set the
+        #current node location to infinity and then look in that list for the index with the smallest value
+        
+        tempdist[current_row][current_col] = inf
+        min_val = inf
+        for i in range(len(grid) - 1):
+            for j in range(len(grid) - 1):
+                if tempdist[i][j] < min_val:
+                    min_val = tempdist[i][j]
+                    current_row = i
+                    current_col = j
+        current_node = grid[current_row][current_col]
+
+        if current_row == end_row and current_col == end_col:
+            finished = True
+        print('New Row: ', current_row, 'New Col: ', current_col)
+
+        
+        
         #current_node = grid
 grid_loop(25, 25)

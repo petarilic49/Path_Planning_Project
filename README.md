@@ -27,3 +27,4 @@ Dijkstras Algorithm:
 ![Dijkstras Algorithm- May 17th 2021 6_29 pm](https://user-images.githubusercontent.com/37299986/118564438-40ec1080-b73e-11eb-91d5-4f06457418aa.gif)
 
 A* Algorithm:
+![Astar Algorithm - May 17th 2021 6_34 pm](https://user-images.githubusercontent.com/37299986/118564620-a809c500-b73e-11eb-8a9f-5160d985948b.gif)

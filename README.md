@@ -24,6 +24,6 @@ Where g(n) is the path cost from the current node to the next, and h(n), also kn
 
 # Example Results
 Dijkstras Algorithm: 
-https://outklip.com/v/-M_wRlulwaX5jwLRRC1J
+![Dijkstras Algorithm- May 17th 2021 6_29 pm](https://user-images.githubusercontent.com/37299986/118564438-40ec1080-b73e-11eb-91d5-4f06457418aa.gif)
 
 A* Algorithm:

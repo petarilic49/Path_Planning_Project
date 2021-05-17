@@ -286,6 +286,8 @@ def Astar(grid, start, end):
     #Initialize an open set which is a priority queue
     open_set = PriorityQueue()
     count = 0
+    #Initialize dictionary/list that tracks the path of each node
+    came_from = {}
     #Get the row and col of the start node
     start_row, start_col = start.get_pos()
     print('Start Row: ', start_row, 'Start Col: ', start_col)
@@ -305,7 +307,7 @@ def Astar(grid, start, end):
         tempg_dist.append([])
         f_dist.append([])
         for j in range(len(grid) - 1):
-            g_dist[i].append(0)
+            g_dist[i].append(inf)
             tempg_dist[i].append(inf)
             f_dist[i].append(inf)
     
@@ -331,7 +333,7 @@ def Astar(grid, start, end):
     #Initialize a finish variable to False and feed into while loop until finished variable is set to True when the shortest path is found
     #Essentially every new node visited (whether above, below, or to the sides) will get a distance of the current distance at that node plus 1
     finished = False
-    
+    current_row, current_col = current_node.get_pos()
     while not finished:
         #Get the current nodes row and column
         current_row, current_col = current_node.get_pos()
@@ -341,91 +343,70 @@ def Astar(grid, start, end):
             print('Displaying shortest path')
             #Set the target/destination node to the color of Cyan (ie the shortest path color)
             current_node.set_path()
-            #Initialize the min_val to inf so we know once we start we'll get a min_val
-            min_val = inf
-            while f_dist[current_row][current_col] != initial_dist:
-                print('Distance is: ', f_dist[current_row][current_col])
-                #node_switch holds the direction of which node should be the next shortest path. Initialized to be 'UP'
-                node_switch = 'UP'
-                if current_col > 0 and f_dist[current_row][current_col - 1] < min_val and not grid[current_row][current_col - 1].is_barrier(): #Check up node distance
-                    node_switch = 'UP'
-                elif current_col < 24 and f_dist[current_row][current_col + 1] < min_val and not grid[current_row][current_col + 1].is_barrier(): #Check down node distance
-                    node_switch = 'DOWN'
-                elif current_row < 24 and f_dist[current_row + 1][current_col] < min_val and not grid[current_row + 1][current_col].is_barrier(): #Check right node distance
-                    node_switch = 'RIGHT'
-                elif current_row > 0 and f_dist[current_row - 1][current_col] < min_val and not grid[current_row - 1][current_col].is_barrier(): #Check left node distance
-                    node_switch = 'LEFT'
-                #Based on which direction the next shortest path node should be, we will update the new current node indeces, update the min_val, and set the new current node to the next shortest path node
-                #When we go back to the top of the while loop however, min_val will not be reset to inf but to the lowest previous value since at least one node surrounding
-                #the current shortest path node will be one less the current nodes distance 
-                print('Node is: ', node_switch)
-                if node_switch == 'UP':
-                    current_row, current_col = current_row, current_col - 1
-                    min_val = f_dist[current_row][current_col]
-                    current_node = grid[current_row][current_col]
-                elif node_switch == 'DOWN':
-                    current_row, current_col = current_row, current_col + 1
-                    min_val = f_dist[current_row][current_col]
-                    current_node = grid[current_row][current_col]
-                elif node_switch == 'RIGHT':
-                    current_row, current_col = current_row + 1, current_col
-                    min_val = f_dist[current_row][current_col]
-                    current_node = grid[current_row][current_col]
-                elif node_switch == 'LEFT':
-                    current_row, current_col = current_row - 1, current_col
-                    min_val = f_dist[current_row][current_col]
-                    current_node = grid[current_row][current_col]
-                print('Min Value is: ', min_val)
-
-                #Make the color of the new shortest path node to Cyan
+            #Use the came_from dictionary to backtrack where each node came from
+            while current_node in came_from:
+                current_node = came_from[current_node]
                 current_node.set_path()
-                #Update the grid with the colored nodes
                 drawGrid(grid, 25, 25)
+
             #Once the shortest path node is at the starting node we exit the shortest path generating while loop and the algorithm while loop
-            print('Is finished')
             finished = True
         
         #Update the f distance of the neighbor nodes of the current and pop them into the priority queue
-        if current_col > 0 and not visited[current_row][current_col - 1] and not grid[current_row][current_col - 1].is_barrier(): #Check/update the distance of the up node
-            f_dist[current_row][current_col - 1] = g_dist[current_row][current_col] + 1 + heuristic(current_node, end) #Up node
+        if current_col > 0 and not visited[current_row][current_col - 1] and not grid[current_row][current_col - 1].is_barrier() and g_dist[current_row][current_col - 1] > g_dist[current_row][current_col] + 1: #Check/update the distance of the up node
+            g_dist[current_row][current_col - 1] = g_dist[current_row][current_col] + 1
+            f_dist[current_row][current_col - 1] = g_dist[current_row][current_col - 1] + heuristic(current_node, end) #Up node
             count = count + 1
             #Put the up node in the priority queue
             open_set.put((f_dist[current_row][current_col - 1], count, grid[current_row][current_col - 1]))
             #Make the node color change to Yellow to indicate distance has been updated
             grid[current_row][current_col - 1].visited()
+            neighbour = grid[current_row][current_col - 1]
+            came_from[neighbour] = current_node
             #Redraw/update the grid to display updated distances
             drawGrid(grid, 25, 25)
 
-        if current_col < 24 and not visited[current_row][current_col + 1] and not grid[current_row][current_col + 1].is_barrier(): #Check/update the distance of the down node
-            f_dist[current_row][current_col + 1] = g_dist[current_row][current_col] + 1 + heuristic(current_node, end) #Down node
+        if current_col < 24 and not visited[current_row][current_col + 1] and not grid[current_row][current_col + 1].is_barrier() and g_dist[current_row][current_col + 1] > g_dist[current_row][current_col] + 1: #Check/update the distance of the down node
+            g_dist[current_row][current_col + 1] = g_dist[current_row][current_col] + 1
+            f_dist[current_row][current_col + 1] = g_dist[current_row][current_col + 1] + heuristic(current_node, end) #Down node
             count = count + 1
             #Put the up node in the priority queue
             open_set.put((f_dist[current_row][current_col + 1], count, grid[current_row][current_col + 1]))
             grid[current_row][current_col + 1].visited()
+            neighbour = grid[current_row][current_col + 1]
+            came_from[neighbour] = current_node
             #Redraw/update the grid to display updated distances
             drawGrid(grid, 25, 25)
 
-        if current_row < 24 and not visited[current_row + 1][current_col] and not grid[current_row + 1][current_col].is_barrier():
-            f_dist[current_row + 1][current_col] = g_dist[current_row][current_col] + 1 + heuristic(current_node, end) #Right node
+        if current_row < 24 and not visited[current_row + 1][current_col] and not grid[current_row + 1][current_col].is_barrier() and g_dist[current_row + 1][current_col] > g_dist[current_row][current_col] + 1:
+            g_dist[current_row + 1][current_col] = g_dist[current_row][current_col] + 1
+            f_dist[current_row + 1][current_col] = g_dist[current_row + 1][current_col] + heuristic(current_node, end) #Right node
             count = count + 1
             #Put the up node in the priority queue
             open_set.put((f_dist[current_row + 1][current_col], count, grid[current_row + 1][current_col]))
             grid[current_row + 1][current_col].visited()
+            neighbour = grid[current_row + 1][current_col]
+            came_from[neighbour] = current_node
             #Redraw/update the grid to display updated distances
             drawGrid(grid, 25, 25)
 
-        if current_row > 0 and not visited[current_row - 1][current_col] and not grid[current_row - 1][current_col].is_barrier():
-            f_dist[current_row - 1][current_col] = g_dist[current_row][current_col] + 1 + heuristic(current_node, end) #Left node
+        if current_row > 0 and not visited[current_row - 1][current_col] and not grid[current_row - 1][current_col].is_barrier() and g_dist[current_row - 1][current_col] > g_dist[current_row][current_col] + 1:
+            g_dist[current_row - 1][current_col] = g_dist[current_row][current_col] + 1
+            f_dist[current_row - 1][current_col] = g_dist[current_row - 1][current_col] + heuristic(current_node, end) #Left node
             count = count + 1
             #Put the up node in the priority queue
             open_set.put((f_dist[current_row - 1][current_col], count, grid[current_row - 1][current_col]))
             grid[current_row - 1][current_col].visited()
+            neighbour = grid[current_row - 1][current_col]
+            came_from[neighbour] = current_node
             #Redraw/update the grid to display updated distances
             drawGrid(grid, 25, 25)
         
+        #We need to get the lowest from the priority queue but alos make sure that the new node has not been visited yet 
         visited[current_row][current_col] = True
         current_node = open_set.get()[2]
         
+
         
 #Make a grid of 25 rows and 25 columns and begin the path planning   
 grid_loop(25, 25)

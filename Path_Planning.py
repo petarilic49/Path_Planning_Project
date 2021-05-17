@@ -4,7 +4,6 @@
 
 import pygame
 import sys
-import time
 from queue import PriorityQueue
 
 #Define the color constants
@@ -97,9 +96,14 @@ def grid_loop(rows, cols):
                     mouseclick = 2
                 else: #If its the third or more mouse click then we set the clicked node to barrier
                     node.set_barrier()
-            elif pygame.mouse.get_pressed() == (0, 0, 1): #If the right mouse button is clicked start the algorithm
-                #dijkstra(nodes, start, end)
-                Astar(nodes, start, end)
+            elif event.type == pygame.KEYDOWN: #If a keyboard is clicked then start the program based on the key pressed
+                if event.key == pygame.K_d and start and end: #If the 'd' key is pressed then perform Dijkstras algorithm
+                    dijkstra(nodes, start, end)
+                elif event.key == pygame.K_a and start and end: #If the 'a' key is pressed then perform A* star algorithm
+                    Astar(nodes, start, end)
+                else: #If an invalid key is pressed or you have not selected a start/end node 
+                    print('Please assign missing node or invalid key expression')
+                    continue
                 
 
 #Function to draw the grid (ie horizontal and vertical lines)
@@ -132,11 +136,8 @@ def drawGrid(grid, rows, cols):
     draw_gridlines(rows, cols)
     pygame.display.update()
 
-#What it needs to do: 
-# - Start at the start node and initialize a distance of 0
-# - Initialize all other nodes in the grid to have a distance of infinity
-# - Take the neighbor of the start node and update the distance to current distance plus 1
-# - Repeat this for the each neighbor node
+#Function to calculate the dijkstras shortest path algorithm. Each node will have a distance/weight of 1 therefore the distance of the current node to its 
+#neighbour will be the current node distance plus one
 def dijkstra(grid, start, end):
     #Get the row and col of the start node
     start_row, start_col = start.get_pos()
@@ -270,10 +271,8 @@ def dijkstra(grid, start, end):
             #Once the shortest path node is at the starting node we exit the shortest path generating while loop and the algorithm while loop
             print('Is finished')
             finished = True
-        #Time delay the algorithm loop to 0.02 seconds in order to better visualize each node being checked
-        time.sleep(0.02)
 
-#Now distance is equal to g(n) = cost to next node which will always just be 1, and h(n) = heuristic function which in this case will be the Manhatton 
+#For A* star algorithm now the distance is equal to g(n) = cost to next node which will always just be 1, and h(n) = heuristic function which in this case will be the Manhatton 
 #distance/cost from the current node to the destination node
 
 #Function to calculate the hueristic function of the node
@@ -282,15 +281,16 @@ def heuristic(current, end):
     x2, y2 = end.get_pos()
     return abs(x2 - x1) + abs(y2 - y1)
 
+#Function that will calculate the shortest path using the A* algorithm
 def Astar(grid, start, end):
     #Initialize an open set which is a priority queue
     open_set = PriorityQueue()
+    #Count variable is used if the distance of two nodes is exactly the same then the count number will be used to differenitate which node is highest priority
     count = 0
-    #Initialize dictionary/list that tracks the path of each node
+    #Initialize a data structure that tracks the path of each node (ie where did the current node come from)
     came_from = {}
     #Get the row and col of the start node
     start_row, start_col = start.get_pos()
-    print('Start Row: ', start_row, 'Start Col: ', start_col)
     # Get the row and col of the end node
     end_row, end_col = end.get_pos()
     #Set infinity to very high number
@@ -298,24 +298,21 @@ def Astar(grid, start, end):
     #Make an array/list that has infinity for all the distances
     g_dist = []
     f_dist = []
-    tempg_dist = [] #Temp dist is used to find the index of the minimum distance, this is done by setting the current row and column to inf because technically 
-    #the current index is actually a minimum so we want to find the next lowest minimum
     
-    #Initialize all the distances in the distance and tempdist lists to inf
+    #Initialize all the distances in the g_dist and f_dist lists to inf
     for i in range(len(grid) - 1):
         g_dist.append([])
-        tempg_dist.append([])
         f_dist.append([])
         for j in range(len(grid) - 1):
             g_dist[i].append(inf)
-            tempg_dist[i].append(inf)
             f_dist[i].append(inf)
     
     #Get the position of the start node and make the distance equal to 0
     g_dist[start_row][start_col] = 0
-    tempg_dist[start_row][start_col] = 0
     initial_dist = heuristic(start, end)
+    #The start node will have a distance equal to how far away it is from the end node 
     f_dist[start_row][start_col] = initial_dist
+    #Input the start node into the priority queue
     open_set.put((f_dist[start_row][start_col], count, start))
 
     #Create a list for the visited nodes (holds False for node index that hasnt been visited)
@@ -333,76 +330,74 @@ def Astar(grid, start, end):
     #Initialize a finish variable to False and feed into while loop until finished variable is set to True when the shortest path is found
     #Essentially every new node visited (whether above, below, or to the sides) will get a distance of the current distance at that node plus 1
     finished = False
-    current_row, current_col = current_node.get_pos()
     while not finished:
         #Get the current nodes row and column
         current_row, current_col = current_node.get_pos()
         #Check to see if the current new node is actually the finished node
-        print('New Node Row: ', current_row, 'New Node Col: ', current_col)
         if current_row == end_row and current_col == end_col:
-            print('Displaying shortest path')
             #Set the target/destination node to the color of Cyan (ie the shortest path color)
             current_node.set_path()
-            #Use the came_from dictionary to backtrack where each node came from
+            #Use the came_from data structure to backtrack where each node came from until the start node is reached, the start node does not
+            #have a parent node therefore the while loop will end once it is reached
             while current_node in came_from:
                 current_node = came_from[current_node]
                 current_node.set_path()
                 drawGrid(grid, 25, 25)
 
             #Once the shortest path node is at the starting node we exit the shortest path generating while loop and the algorithm while loop
+            print('Is finished')
             finished = True
         
         #Update the f distance of the neighbor nodes of the current and pop them into the priority queue
         if current_col > 0 and not visited[current_row][current_col - 1] and not grid[current_row][current_col - 1].is_barrier() and g_dist[current_row][current_col - 1] > g_dist[current_row][current_col] + 1: #Check/update the distance of the up node
+            #Update the g_dist of the neighbour node
             g_dist[current_row][current_col - 1] = g_dist[current_row][current_col] + 1
+            #Update the f_dist of the neighbour node and increase the count variable for the priority queue
             f_dist[current_row][current_col - 1] = g_dist[current_row][current_col - 1] + heuristic(current_node, end) #Up node
             count = count + 1
-            #Put the up node in the priority queue
+            #Put the neighbour node in the priority queue with its associated f_dist and its count value
             open_set.put((f_dist[current_row][current_col - 1], count, grid[current_row][current_col - 1]))
             #Make the node color change to Yellow to indicate distance has been updated
             grid[current_row][current_col - 1].visited()
+            #Temporarily store this neighbour node in the variable neighbour
             neighbour = grid[current_row][current_col - 1]
+            #Update the data structure 'came_from' to make the current node the parent of the neighbour node that is being updated
             came_from[neighbour] = current_node
             #Redraw/update the grid to display updated distances
             drawGrid(grid, 25, 25)
+            #These steps repeat for the other neighbour nodes
 
         if current_col < 24 and not visited[current_row][current_col + 1] and not grid[current_row][current_col + 1].is_barrier() and g_dist[current_row][current_col + 1] > g_dist[current_row][current_col] + 1: #Check/update the distance of the down node
             g_dist[current_row][current_col + 1] = g_dist[current_row][current_col] + 1
             f_dist[current_row][current_col + 1] = g_dist[current_row][current_col + 1] + heuristic(current_node, end) #Down node
             count = count + 1
-            #Put the up node in the priority queue
             open_set.put((f_dist[current_row][current_col + 1], count, grid[current_row][current_col + 1]))
             grid[current_row][current_col + 1].visited()
             neighbour = grid[current_row][current_col + 1]
             came_from[neighbour] = current_node
-            #Redraw/update the grid to display updated distances
             drawGrid(grid, 25, 25)
 
         if current_row < 24 and not visited[current_row + 1][current_col] and not grid[current_row + 1][current_col].is_barrier() and g_dist[current_row + 1][current_col] > g_dist[current_row][current_col] + 1:
             g_dist[current_row + 1][current_col] = g_dist[current_row][current_col] + 1
             f_dist[current_row + 1][current_col] = g_dist[current_row + 1][current_col] + heuristic(current_node, end) #Right node
             count = count + 1
-            #Put the up node in the priority queue
             open_set.put((f_dist[current_row + 1][current_col], count, grid[current_row + 1][current_col]))
             grid[current_row + 1][current_col].visited()
             neighbour = grid[current_row + 1][current_col]
             came_from[neighbour] = current_node
-            #Redraw/update the grid to display updated distances
             drawGrid(grid, 25, 25)
 
         if current_row > 0 and not visited[current_row - 1][current_col] and not grid[current_row - 1][current_col].is_barrier() and g_dist[current_row - 1][current_col] > g_dist[current_row][current_col] + 1:
             g_dist[current_row - 1][current_col] = g_dist[current_row][current_col] + 1
             f_dist[current_row - 1][current_col] = g_dist[current_row - 1][current_col] + heuristic(current_node, end) #Left node
             count = count + 1
-            #Put the up node in the priority queue
             open_set.put((f_dist[current_row - 1][current_col], count, grid[current_row - 1][current_col]))
             grid[current_row - 1][current_col].visited()
             neighbour = grid[current_row - 1][current_col]
             came_from[neighbour] = current_node
-            #Redraw/update the grid to display updated distances
             drawGrid(grid, 25, 25)
         
-        #We need to get the lowest from the priority queue but alos make sure that the new node has not been visited yet 
+        #Set the current node as visited and update the new current node to be the highest priority node from the priority queue (ie whichever has the lowest f_dist)
         visited[current_row][current_col] = True
         current_node = open_set.get()[2]
         
